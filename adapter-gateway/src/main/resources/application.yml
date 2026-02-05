@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+gateway:
+  upstream:
+    host: localhost
+    port: 9090
+    max-sessions: 2
+    max-inflight-per-session: 2000
+    max-queue-depth: 20000
+    request-timeout-ms: 2000
+    queue-wait-max-ms: 300
+    reconnect:
+      initial-delay-ms: 100
+      max-delay-ms: 5000
+      multiplier: 2.0
+  idempotency:
+    ttl-seconds: 300
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info
+  metrics:
+    distribution:
+      percentiles-histogram:
+        tx.latency: true
+
+logging:
+  level:
+    com.network.gateway: DEBUG

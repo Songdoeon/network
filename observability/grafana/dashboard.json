@@ -1,0 +1,109 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Transaction Latency (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(tx_latency_seconds_bucket[1m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(tx_latency_seconds_bucket[1m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(tx_latency_seconds_bucket[1m]))",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        }
+      }
+    },
+    {
+      "title": "Throughput (req/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(tx_latency_seconds_count[1m])",
+          "legendFormat": "requests/sec"
+        }
+      ]
+    },
+    {
+      "title": "Inflight per Session",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "session_inflight",
+          "legendFormat": "{{sessionId}}"
+        }
+      ]
+    },
+    {
+      "title": "Queue Depth",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "queue_depth",
+          "legendFormat": "queue depth"
+        }
+      ]
+    },
+    {
+      "title": "Error / Timeout / Busy Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "rate(tx_timeout_count_total[1m])",
+          "legendFormat": "timeout/s"
+        },
+        {
+          "expr": "rate(tx_error_count_total[1m])",
+          "legendFormat": "error/s"
+        },
+        {
+          "expr": "rate(tx_busy_reject_count_total[1m])",
+          "legendFormat": "busy/s"
+        }
+      ]
+    },
+    {
+      "title": "Late Responses & Reconnects",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "rate(tx_late_response_count_total[1m])",
+          "legendFormat": "late responses/s"
+        },
+        {
+          "expr": "rate(session_reconnect_count_total[1m])",
+          "legendFormat": "reconnects/s"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": ["gateway"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "Multiplexing Gateway Dashboard",
+  "uid": "gateway-dashboard"
+}

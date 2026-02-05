@@ -1,0 +1,6 @@
+rootProject.name = 'multiplexing-gateway'
+
+include 'common'
+include 'adapter-gateway'
+include 'card-sim'
+include 'loadgen'
