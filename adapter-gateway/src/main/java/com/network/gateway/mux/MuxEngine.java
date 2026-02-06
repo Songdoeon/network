@@ -12,8 +12,8 @@ import com.network.gateway.session.UpstreamSession;
 import com.network.gateway.session.UpstreamSessionPool;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
@@ -23,10 +23,10 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.*;
 
+@Slf4j
+@RequiredArgsConstructor
 @Component
 public class MuxEngine {
-
-    private static final Logger log = LoggerFactory.getLogger(MuxEngine.class);
 
     private final GatewayProperties properties;
     private final UpstreamSessionPool sessionPool;
@@ -34,12 +34,6 @@ public class MuxEngine {
     private final PendingMap pendingMap = new PendingMap();
     private final CorrelationIdGenerator corrIdGen = new CorrelationIdGenerator();
     private ScheduledExecutorService timeoutScheduler;
-
-    public MuxEngine(GatewayProperties properties, UpstreamSessionPool sessionPool, GatewayMetrics metrics) {
-        this.properties = properties;
-        this.sessionPool = sessionPool;
-        this.metrics = metrics;
-    }
 
     @PostConstruct
     public void init() {

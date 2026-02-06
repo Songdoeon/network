@@ -1,7 +1,4 @@
-﻿# Created by https://www.toptal.com/developers/gitignore/api/intellij,visualstudio,git,macos,windows,linux,java,gradle
-# Edit at https://www.toptal.com/developers/gitignore?templates=intellij,visualstudio,git,macos,windows,linux,java,gradle
-
-### Git ###
+﻿### Git ###
 # Created by git for backups. To disable backups in Git:
 # $ git config --global mergetool.keepBackup false
 *.orig
@@ -653,3 +650,5 @@ FodyWeavers.xsd
 
 # End of https://www.toptal.com/developers/gitignore/api/intellij,visualstudio,git,macos,windows,linux,java,gradle
 .idea
+.gradle
+build

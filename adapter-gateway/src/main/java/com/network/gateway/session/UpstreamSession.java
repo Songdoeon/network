@@ -4,15 +4,13 @@ import com.network.common.protocol.Frame;
 import com.network.common.protocol.FrameCodec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Slf4j
 public class UpstreamSession {
-
-    private static final Logger log = LoggerFactory.getLogger(UpstreamSession.class);
 
     private final String sessionId;
     private final AtomicReference<Channel> channel = new AtomicReference<>();

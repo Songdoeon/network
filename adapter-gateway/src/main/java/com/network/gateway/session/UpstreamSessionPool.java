@@ -8,8 +8,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -19,10 +19,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
+@RequiredArgsConstructor
 @Component
 public class UpstreamSessionPool {
-
-    private static final Logger log = LoggerFactory.getLogger(UpstreamSessionPool.class);
 
     private final GatewayProperties properties;
     private final GatewayChannelInitializer channelInitializer;
@@ -32,11 +32,6 @@ public class UpstreamSessionPool {
 
     private EventLoopGroup workerGroup;
     private Bootstrap bootstrap;
-
-    public UpstreamSessionPool(GatewayProperties properties, GatewayChannelInitializer channelInitializer) {
-        this.properties = properties;
-        this.channelInitializer = channelInitializer;
-    }
 
     @PostConstruct
     public void init() {

@@ -9,14 +9,14 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
+@RequiredArgsConstructor
 @Component
 public class ScenarioEngine {
-
-    private static final Logger log = LoggerFactory.getLogger(ScenarioEngine.class);
 
     private final SimulatorProperties properties;
     private final CardSimChannelInitializer channelInitializer;
@@ -24,11 +24,6 @@ public class ScenarioEngine {
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private ChannelFuture serverFuture;
-
-    public ScenarioEngine(SimulatorProperties properties, CardSimChannelInitializer channelInitializer) {
-        this.properties = properties;
-        this.channelInitializer = channelInitializer;
-    }
 
     @PostConstruct
     public void start() {

@@ -7,8 +7,8 @@ import com.network.gateway.idempotency.IdempotencyStore;
 import com.network.gateway.mux.MuxEngine;
 import com.network.gateway.observability.GatewayMetrics;
 import com.network.gateway.observability.TransactionLogger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,27 +16,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/v1")
 public class IngressController {
-
-    private static final Logger log = LoggerFactory.getLogger(IngressController.class);
 
     private final MuxEngine muxEngine;
     private final AdmissionControl admissionControl;
     private final IdempotencyStore idempotencyStore;
     private final GatewayMetrics metrics;
     private final TransactionLogger txLogger;
-
-    public IngressController(MuxEngine muxEngine, AdmissionControl admissionControl,
-                             IdempotencyStore idempotencyStore, GatewayMetrics metrics,
-                             TransactionLogger txLogger) {
-        this.muxEngine = muxEngine;
-        this.admissionControl = admissionControl;
-        this.idempotencyStore = idempotencyStore;
-        this.metrics = metrics;
-        this.txLogger = txLogger;
-    }
 
     @PostMapping("/authorize")
     public ResponseEntity<AuthorizeResponse> authorize(@RequestBody AuthorizeRequest request) {

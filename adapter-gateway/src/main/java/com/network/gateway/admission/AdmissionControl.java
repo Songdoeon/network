@@ -3,25 +3,20 @@ package com.network.gateway.admission;
 import com.network.gateway.config.GatewayProperties;
 import com.network.gateway.session.UpstreamSession;
 import com.network.gateway.session.UpstreamSessionPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Slf4j
+@RequiredArgsConstructor
 @Component
 public class AdmissionControl {
-
-    private static final Logger log = LoggerFactory.getLogger(AdmissionControl.class);
 
     private final GatewayProperties properties;
     private final UpstreamSessionPool sessionPool;
     private final AtomicInteger queueDepth = new AtomicInteger(0);
-
-    public AdmissionControl(GatewayProperties properties, UpstreamSessionPool sessionPool) {
-        this.properties = properties;
-        this.sessionPool = sessionPool;
-    }
 
     /**
      * 요청 수용 가능 여부를 판단한다.

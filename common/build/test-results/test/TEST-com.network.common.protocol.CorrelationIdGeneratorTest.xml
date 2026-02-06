@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.network.common.protocol.CorrelationIdGeneratorTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-02-05T12:33:18" hostname="MacBook-Air.local" time="0.097">
-  <properties/>
-  <testcase name="next_returns8CharString()" classname="com.network.common.protocol.CorrelationIdGeneratorTest" time="0.059"/>
-  <testcase name="next_incrementsSequentially()" classname="com.network.common.protocol.CorrelationIdGeneratorTest" time="0.001"/>
-  <testcase name="next_threadSafe_noDuplicates()" classname="com.network.common.protocol.CorrelationIdGeneratorTest" time="0.035"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

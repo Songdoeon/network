@@ -10,29 +10,21 @@ import com.network.common.protocol.MessageType;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
+@RequiredArgsConstructor
 public class CardSimHandler extends SimpleChannelInboundHandler<ByteBuf> {
-
-    private static final Logger log = LoggerFactory.getLogger(CardSimHandler.class);
 
     private final LatencyInjector latencyInjector;
     private final ErrorInjector errorInjector;
     private final OutOfOrderInjector outOfOrderInjector;
     private final ScheduledExecutorService scheduler;
-
-    public CardSimHandler(LatencyInjector latencyInjector, ErrorInjector errorInjector,
-                          OutOfOrderInjector outOfOrderInjector, ScheduledExecutorService scheduler) {
-        this.latencyInjector = latencyInjector;
-        this.errorInjector = errorInjector;
-        this.outOfOrderInjector = outOfOrderInjector;
-        this.scheduler = scheduler;
-    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) {

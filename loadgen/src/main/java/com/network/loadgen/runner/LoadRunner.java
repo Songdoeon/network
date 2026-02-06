@@ -4,8 +4,8 @@ import com.network.common.dto.AuthorizeResponse;
 import com.network.loadgen.client.GatewayClient;
 import com.network.loadgen.config.LoadGenProperties;
 import com.network.loadgen.report.ResultReporter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -15,20 +15,14 @@ import reactor.core.scheduler.Schedulers;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 
+@Slf4j
+@RequiredArgsConstructor
 @Component
 public class LoadRunner implements CommandLineRunner {
-
-    private static final Logger log = LoggerFactory.getLogger(LoadRunner.class);
 
     private final LoadGenProperties properties;
     private final GatewayClient client;
     private final ResultReporter reporter;
-
-    public LoadRunner(LoadGenProperties properties, GatewayClient client, ResultReporter reporter) {
-        this.properties = properties;
-        this.client = client;
-        this.reporter = reporter;
-    }
 
     @Override
     public void run(String... args) throws Exception {

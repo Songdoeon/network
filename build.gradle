@@ -21,6 +21,11 @@ subprojects {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
+    dependencies {
+        compileOnly 'org.projectlombok:lombok:1.18.36'
+        annotationProcessor 'org.projectlombok:lombok:1.18.36'
+    }
+
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
     }

@@ -7,10 +7,12 @@ import com.network.cardsim.scenario.OutOfOrderInjector;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ScheduledExecutorService;
 
+@RequiredArgsConstructor
 @Component
 public class CardSimChannelInitializer extends ChannelInitializer<SocketChannel> {
 
@@ -19,17 +21,6 @@ public class CardSimChannelInitializer extends ChannelInitializer<SocketChannel>
     private final OutOfOrderInjector outOfOrderInjector;
     private final DisconnectInjector disconnectInjector;
     private final ScheduledExecutorService scheduler;
-
-    public CardSimChannelInitializer(LatencyInjector latencyInjector, ErrorInjector errorInjector,
-                                     OutOfOrderInjector outOfOrderInjector,
-                                     DisconnectInjector disconnectInjector,
-                                     ScheduledExecutorService scheduler) {
-        this.latencyInjector = latencyInjector;
-        this.errorInjector = errorInjector;
-        this.outOfOrderInjector = outOfOrderInjector;
-        this.disconnectInjector = disconnectInjector;
-        this.scheduler = scheduler;
-    }
 
     @Override
     protected void initChannel(SocketChannel ch) {

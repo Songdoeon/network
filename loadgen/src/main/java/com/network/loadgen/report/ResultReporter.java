@@ -1,19 +1,17 @@
 package com.network.loadgen.report;
 
 import com.network.common.dto.TransactionStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.HdrHistogram.Histogram;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Slf4j
 @Component
 public class ResultReporter {
-
-    private static final Logger log = LoggerFactory.getLogger(ResultReporter.class);
 
     private final Histogram latencyHistogram = new Histogram(60_000, 3);
     private final Map<TransactionStatus, AtomicLong> statusCounts = new ConcurrentHashMap<>();

@@ -2,15 +2,13 @@ package com.network.gateway.observability;
 
 import com.network.common.dto.AuthorizeResponse;
 import com.network.common.dto.TransactionStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class TransactionLogger {
-
-    private static final Logger log = LoggerFactory.getLogger(TransactionLogger.class);
 
     public void logRequest(String txId, String correlationId, String merchantId, String idempotencyKey) {
         MDC.put("txId", txId);

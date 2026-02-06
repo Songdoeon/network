@@ -6,26 +6,22 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
+@RequiredArgsConstructor
 @Component
 public class DisconnectInjector {
-
-    private static final Logger log = LoggerFactory.getLogger(DisconnectInjector.class);
 
     private final SimulatorProperties properties;
     private final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
     private ScheduledExecutorService scheduler;
-
-    public DisconnectInjector(SimulatorProperties properties) {
-        this.properties = properties;
-    }
 
     @PostConstruct
     public void init() {

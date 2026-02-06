@@ -4,26 +4,22 @@ import com.network.common.dto.AuthorizeResponse;
 import com.network.gateway.config.GatewayProperties;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.*;
 
+@Slf4j
+@RequiredArgsConstructor
 @Component
 public class IdempotencyStore {
-
-    private static final Logger log = LoggerFactory.getLogger(IdempotencyStore.class);
 
     private final GatewayProperties properties;
     private final ConcurrentMap<String, IdempotencyEntry> store = new ConcurrentHashMap<>();
     private ScheduledExecutorService cleaner;
-
-    public IdempotencyStore(GatewayProperties properties) {
-        this.properties = properties;
-    }
 
     @PostConstruct
     public void init() {
