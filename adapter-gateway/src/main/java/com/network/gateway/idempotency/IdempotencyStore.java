@@ -45,12 +45,17 @@ public class IdempotencyStore {
         return store.get(idempotencyKey);
     }
 
-    public IdempotencyEntry putIfAbsent(String idempotencyKey, CompletableFuture<AuthorizeResponse> future) {
+    /**
+     * 멱등성 키를 등록한다. 이미 존재하면 기존 future를 반환, 신규면 null.
+     * ConcurrentHashMap.putIfAbsent로 원자적 등록 보장 → 동시 요청 시 하나만 실행.
+     */
+    public CompletableFuture<AuthorizeResponse> putIfAbsent(String idempotencyKey, CompletableFuture<AuthorizeResponse> future) {
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
             return null;
         }
         IdempotencyEntry newEntry = new IdempotencyEntry(future, Instant.now());
-        return store.putIfAbsent(idempotencyKey, newEntry);
+        IdempotencyEntry existing = store.putIfAbsent(idempotencyKey, newEntry);
+        return existing != null ? existing.getFuture() : null;
     }
 
     public void markCompleted(String idempotencyKey, AuthorizeResponse response) {
@@ -66,13 +71,9 @@ public class IdempotencyStore {
     private void evictExpired() {
         int ttlSeconds = properties.getIdempotency().getTtlSeconds();
         Instant cutoff = Instant.now().minusSeconds(ttlSeconds);
-        int evicted = 0;
-        for (Map.Entry<String, IdempotencyEntry> entry : store.entrySet()) {
-            if (entry.getValue().getCreatedAt().isBefore(cutoff)) {
-                store.remove(entry.getKey());
-                evicted++;
-            }
-        }
+        int sizeBefore = store.size();
+        store.entrySet().removeIf(entry -> entry.getValue().getCreatedAt().isBefore(cutoff));
+        int evicted = sizeBefore - store.size();
         if (evicted > 0) {
             log.debug("Evicted {} expired idempotency entries", evicted);
         }

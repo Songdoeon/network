@@ -10,6 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class LoadGenProperties {
 
     private String gatewayUrl = "http://localhost:8080";
+    private String cardSimUrl = "http://localhost:8081";
     private int concurrentUsers = 100;
     private int durationSeconds = 30;
     private int rampUpSeconds = 5;

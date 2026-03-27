@@ -5,8 +5,10 @@ import com.network.common.protocol.MessageType;
 import com.network.gateway.admission.AdmissionControl;
 import com.network.gateway.idempotency.IdempotencyStore;
 import com.network.gateway.mux.MuxEngine;
+import com.network.gateway.mux.PendingRequest;
 import com.network.gateway.observability.GatewayMetrics;
 import com.network.gateway.observability.TransactionLogger;
+import com.network.gateway.transaction.TransactionLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,7 @@ public class IngressController {
     private final IdempotencyStore idempotencyStore;
     private final GatewayMetrics metrics;
     private final TransactionLogger txLogger;
+    private final TransactionLog transactionLog;
 
     @PostMapping("/authorize")
     public ResponseEntity<AuthorizeResponse> authorize(@RequestBody AuthorizeRequest request) {
@@ -57,13 +60,31 @@ public class IngressController {
                     .body(new AuthorizeResponse(null, TransactionStatus.BUSY, "CAPACITY_EXCEEDED", 0, null));
         }
 
-        // 3. 요청 제출
-        CompletableFuture<AuthorizeResponse> future = muxEngine.submit(request, MessageType.AUTH_REQ, idempotencyKey);
-
-        // 멱등성 등록
+        // 3. 멱등성 등록 (submit 전에 등록하여 동시 요청 시 이중 실행 방지)
+        CompletableFuture<AuthorizeResponse> future = new CompletableFuture<>();
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
-            idempotencyStore.putIfAbsent(idempotencyKey, future);
+            CompletableFuture<AuthorizeResponse> existingFuture = idempotencyStore.putIfAbsent(idempotencyKey, future);
+            if (existingFuture != null) {
+                // 다른 스레드가 이미 등록함 → 그 future에 attach
+                try {
+                    AuthorizeResponse response = existingFuture.get(2, TimeUnit.SECONDS);
+                    return ResponseEntity.ok(response);
+                } catch (Exception e) {
+                    return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
+                            .body(new AuthorizeResponse(null, TransactionStatus.TIMEOUT, "IDEMPOTENT_WAIT_TIMEOUT", 0, null));
+                }
+            }
         }
+
+        // 4. 요청 제출
+        CompletableFuture<AuthorizeResponse> submitFuture = muxEngine.submit(request, MessageType.AUTH_REQ, idempotencyKey);
+        submitFuture.whenComplete((response, error) -> {
+            if (error != null) {
+                future.completeExceptionally(error);
+            } else {
+                future.complete(response);
+            }
+        });
 
         // 4. 동기 응답 대기
         try {
@@ -79,6 +100,7 @@ public class IngressController {
                 case TIMEOUT -> ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body(response);
                 case BUSY -> ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
                 case ERROR -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                case PENDING -> ResponseEntity.accepted().body(response);
             };
         } catch (Exception e) {
             log.error("Failed to get response", e);
@@ -114,7 +136,19 @@ public class IngressController {
 
     @GetMapping("/inquiry/{txId}")
     public ResponseEntity<InquiryResponse> inquiry(@PathVariable String txId) {
-        // MVP: inquiry는 현재 pending 상태만 확인
-        return ResponseEntity.ok(new InquiryResponse(txId, TransactionStatus.APPROVED, "OK", 0));
+        // 1. pending 확인
+        PendingRequest pending = muxEngine.findPendingByTxId(txId);
+        if (pending != null) {
+            return ResponseEntity.ok(new InquiryResponse(txId, TransactionStatus.PENDING, "IN_PROGRESS", 0));
+        }
+
+        // 2. 완료된 거래 확인
+        TransactionLog.TransactionEntry entry = transactionLog.get(txId);
+        if (entry != null) {
+            return ResponseEntity.ok(new InquiryResponse(txId, entry.status(), entry.reasonCode(), entry.latencyMs()));
+        }
+
+        // 3. 없음
+        return ResponseEntity.notFound().build();
     }
 }

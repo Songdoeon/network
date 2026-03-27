@@ -3,6 +3,7 @@ server:
 
 loadgen:
   gateway-url: http://localhost:8080
+  card-sim-url: http://localhost:8081
   concurrent-users: 100
   duration-seconds: 30
   ramp-up-seconds: 5

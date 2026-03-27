@@ -15,6 +15,9 @@ public final class FrameCodec {
     private FrameCodec() {
     }
 
+    /**
+     * Unpooled 버퍼에 인코딩. 테스트나 단독 사용 시.
+     */
     public static ByteBuf encode(Frame frame) {
         byte[] corrIdBytes = frame.correlationId().getBytes(StandardCharsets.US_ASCII);
         if (corrIdBytes.length != 8) {
@@ -31,6 +34,26 @@ public final class FrameCodec {
         buf.writeShort(frame.messageType().code());
         buf.writeBytes(body);
         return buf;
+    }
+
+    /**
+     * 기존 ByteBuf(out)에 직접 인코딩. Netty 파이프라인에서 pooled 버퍼 활용 시 사용.
+     * 별도 ByteBuf 할당 없이 GC 부담 없음.
+     */
+    public static void encodeTo(Frame frame, ByteBuf out) {
+        byte[] corrIdBytes = frame.correlationId().getBytes(StandardCharsets.US_ASCII);
+        if (corrIdBytes.length != 8) {
+            throw new IllegalArgumentException(
+                    "correlationId must be exactly 8 ASCII bytes, got: " + corrIdBytes.length);
+        }
+
+        byte[] body = frame.body() != null ? frame.body() : new byte[0];
+        int payloadLength = 8 + 2 + body.length;
+
+        out.writeInt(payloadLength);
+        out.writeBytes(corrIdBytes);
+        out.writeShort(frame.messageType().code());
+        out.writeBytes(body);
     }
 
     public static Frame decode(ByteBuf buf) {

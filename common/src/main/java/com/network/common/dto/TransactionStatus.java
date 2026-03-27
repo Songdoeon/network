@@ -5,5 +5,6 @@ public enum TransactionStatus {
     DECLINED,
     TIMEOUT,
     BUSY,
-    ERROR
+    ERROR,
+    PENDING
 }

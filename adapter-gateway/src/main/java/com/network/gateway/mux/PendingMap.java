@@ -26,4 +26,13 @@ public class PendingMap {
     public void forEach(java.util.function.BiConsumer<String, PendingRequest> action) {
         map.forEach(action);
     }
+
+    public PendingRequest findByTxId(String txId) {
+        for (PendingRequest pending : map.values()) {
+            if (txId.equals(pending.getTxId())) {
+                return pending;
+            }
+        }
+        return null;
+    }
 }

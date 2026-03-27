@@ -49,6 +49,11 @@ public class GatewayMetrics {
                 .register(registry);
 
         registry.gauge("queue.depth", queueDepthValue);
+
+        // Pre-register inflight gauges for 2 sessions
+        for (int i = 0; i < 2; i++) {
+            registerInflightGauge("session-" + i, registry);
+        }
     }
 
     public void recordLatency(long latencyMs) {

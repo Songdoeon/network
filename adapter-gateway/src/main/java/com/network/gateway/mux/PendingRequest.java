@@ -14,9 +14,11 @@ public class PendingRequest {
     private final CompletableFuture<AuthorizeResponse> future;
     private final String sessionId;
     private final String idempotencyKey;
+    private final String merchantId;
 
     public PendingRequest(String correlationId, String txId, Instant createdAt,
-                          Instant deadlineAt, String sessionId, String idempotencyKey) {
+                          Instant deadlineAt, String sessionId, String idempotencyKey,
+                          String merchantId) {
         this.correlationId = correlationId;
         this.txId = txId;
         this.createdAt = createdAt;
@@ -24,6 +26,7 @@ public class PendingRequest {
         this.future = new CompletableFuture<>();
         this.sessionId = sessionId;
         this.idempotencyKey = idempotencyKey;
+        this.merchantId = merchantId;
     }
 
     public String getCorrelationId() { return correlationId; }
@@ -33,4 +36,5 @@ public class PendingRequest {
     public CompletableFuture<AuthorizeResponse> getFuture() { return future; }
     public String getSessionId() { return sessionId; }
     public String getIdempotencyKey() { return idempotencyKey; }
+    public String getMerchantId() { return merchantId; }
 }

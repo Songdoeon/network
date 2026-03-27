@@ -10,6 +10,7 @@ import com.network.gateway.config.GatewayProperties;
 import com.network.gateway.observability.GatewayMetrics;
 import com.network.gateway.session.UpstreamSession;
 import com.network.gateway.session.UpstreamSessionPool;
+import com.network.gateway.transaction.TransactionLog;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class MuxEngine {
     private final GatewayProperties properties;
     private final UpstreamSessionPool sessionPool;
     private final GatewayMetrics metrics;
+    private final TransactionLog transactionLog;
     private final PendingMap pendingMap = new PendingMap();
     private final CorrelationIdGenerator corrIdGen = new CorrelationIdGenerator();
     private ScheduledExecutorService timeoutScheduler;
@@ -63,6 +65,7 @@ public class MuxEngine {
         MDC.put("txId", txId);
         MDC.put("correlationId", correlationId);
 
+        try {
         UpstreamSession session = sessionPool.selectSession();
         if (session == null) {
             log.warn("[txId={}] No active upstream session", txId);
@@ -76,7 +79,8 @@ public class MuxEngine {
         Instant deadline = now.plusMillis(timeoutMs);
 
         PendingRequest pending = new PendingRequest(
-                correlationId, txId, now, deadline, session.getSessionId(), idempotencyKey);
+                correlationId, txId, now, deadline, session.getSessionId(), idempotencyKey,
+                request.merchantId());
         pendingMap.put(correlationId, pending);
 
         session.incrementInflight();
@@ -107,6 +111,9 @@ public class MuxEngine {
         );
 
         return pending.getFuture();
+        } finally {
+            MDC.clear();
+        }
     }
 
     /**
@@ -146,6 +153,7 @@ public class MuxEngine {
 
         log.debug("[txId={}] Completed: status={}, latency={}ms", pending.getTxId(), status, latencyMs);
 
+        transactionLog.record(pending.getTxId(), status, reasonCode, latencyMs, sessionId, pending.getMerchantId());
         pending.getFuture().complete(response);
     }
 
@@ -158,6 +166,8 @@ public class MuxEngine {
                 PendingRequest removed = pendingMap.remove(corrId);
                 if (removed != null) {
                     long latencyMs = Duration.between(removed.getCreatedAt(), Instant.now()).toMillis();
+                    transactionLog.record(removed.getTxId(), TransactionStatus.ERROR, "UPSTREAM_DOWN",
+                            latencyMs, sessionId, removed.getMerchantId());
                     removed.getFuture().complete(
                             new AuthorizeResponse(removed.getTxId(), TransactionStatus.ERROR,
                                     "UPSTREAM_DOWN", latencyMs, sessionId));
@@ -169,6 +179,10 @@ public class MuxEngine {
 
     public int getPendingCount() {
         return pendingMap.size();
+    }
+
+    public PendingRequest findPendingByTxId(String txId) {
+        return pendingMap.findByTxId(txId);
     }
 
     private void handleTimeout(String correlationId) {
@@ -193,6 +207,9 @@ public class MuxEngine {
 
         metrics.incrementTimeout();
         metrics.recordLatency(latencyMs);
+
+        transactionLog.record(pending.getTxId(), TransactionStatus.TIMEOUT, "REQUEST_TIMEOUT",
+                latencyMs, sessionId, pending.getMerchantId());
 
         pending.getFuture().complete(
                 new AuthorizeResponse(pending.getTxId(), TransactionStatus.TIMEOUT,
