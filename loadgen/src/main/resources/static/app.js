@@ -219,7 +219,6 @@ function updateDiagram(metrics) {
 // ── Metric Cards ──────────────────────────────────
 function updateMetricCards(metrics) {
     setMetric('live-inflight', Math.round(metrics.inflight || 0), 500, 1500);
-    setMetric('live-queue', Math.round(metrics.queueDepth || 0), 100, 1000);
     setMetric('live-busy', Math.round(metrics.busyRejectCount || 0), 1, 10);
     setMetric('live-timeout', Math.round(metrics.timeoutCount || 0), 1, 10);
 }
@@ -237,7 +236,7 @@ function pushHistory(metrics) {
     metricsHistory.push({
         t: Date.now(),
         inflight: metrics.inflight || 0,
-        queue: metrics.queueDepth || 0,
+        busyCount: metrics.busyRejectCount || 0,
         busy: metrics.busyRejectCount || 0,
         timeout: metrics.timeoutCount || 0
     });
@@ -269,8 +268,8 @@ function drawChart() {
 
     // Find max values
     const maxInflight = Math.max(10, ...metricsHistory.map(m => m.inflight));
-    const maxQueue = Math.max(10, ...metricsHistory.map(m => m.queue));
-    const maxY = Math.max(maxInflight, maxQueue);
+    const maxBusy = Math.max(10, ...metricsHistory.map(m => m.busyCount));
+    const maxY = Math.max(maxInflight, maxBusy);
 
     // Grid
     ctx.strokeStyle = '#21262d';
@@ -290,7 +289,7 @@ function drawChart() {
 
     // Draw lines
     drawLine(ctx, metricsHistory.map(m => m.inflight), maxY, plotW, plotH, padding, '#58a6ff');
-    drawLine(ctx, metricsHistory.map(m => m.queue), maxY, plotW, plotH, padding, '#f0883e');
+    drawLine(ctx, metricsHistory.map(m => m.busyCount), maxY, plotW, plotH, padding, '#f0883e');
 
     // Legend
     ctx.font = '11px sans-serif';
@@ -298,7 +297,7 @@ function drawChart() {
     ctx.textAlign = 'left';
     ctx.fillText('● Inflight', padding.left + 10, h - 8);
     ctx.fillStyle = '#f0883e';
-    ctx.fillText('● Queue Depth', padding.left + 100, h - 8);
+    ctx.fillText('● BUSY Rejects', padding.left + 100, h - 8);
 }
 
 function drawLine(ctx, values, maxY, plotW, plotH, padding, color) {

@@ -48,7 +48,7 @@ flowchart LR
 ## 빠른 시작
 
 ```bash
-git clone <repository-url> && cd network
+git clone https://github.com/Songdoeon/network.git && cd network
 docker compose up -d
 open http://localhost:8082
 ```
@@ -58,6 +58,18 @@ open http://localhost:8082
 | `http://localhost:8082` | 컨트롤 패널 — 시나리오 실행, 실시간 메트릭, 아키텍처 다이어그램 |
 | `http://localhost:3000` | Grafana 대시보드 |
 | `http://localhost:8080` | Gateway API |
+
+### 컨트롤 패널
+
+![Control Panel](docs/screenshot-idle.png)
+
+### BURST 시나리오 실행 중
+
+![Burst Running](docs/screenshot-burst.png)
+
+### Grafana 대시보드
+
+![Grafana Dashboard](docs/screenshot-grafana.png)
 
 ---
 
