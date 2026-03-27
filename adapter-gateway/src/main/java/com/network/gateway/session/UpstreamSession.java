@@ -1,8 +1,6 @@
 package com.network.gateway.session;
 
 import com.network.common.protocol.Frame;
-import com.network.common.protocol.FrameCodec;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 
@@ -90,8 +88,8 @@ public class UpstreamSession {
             log.warn("[session={}] Cannot write, channel inactive", sessionId);
             return false;
         }
-        ByteBuf encoded = FrameCodec.encode(frame);
-        ch.writeAndFlush(encoded);
+        // Frame 객체를 파이프라인에 보내면 FrameEncoder가 pooled ByteBuf에 인코딩
+        ch.writeAndFlush(frame);
         return true;
     }
 }

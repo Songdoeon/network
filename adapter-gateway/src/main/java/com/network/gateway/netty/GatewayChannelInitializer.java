@@ -19,6 +19,7 @@ public class GatewayChannelInitializer extends ChannelInitializer<SocketChannel>
     protected void initChannel(SocketChannel ch) {
         ch.pipeline()
                 .addLast("frameDecoder", new FrameDecoder())
+                .addLast("frameEncoder", new FrameEncoder())
                 .addLast("responseHandler", new ResponseHandler(muxEngine));
     }
 }

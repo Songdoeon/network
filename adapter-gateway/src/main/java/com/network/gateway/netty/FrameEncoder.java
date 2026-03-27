@@ -10,8 +10,7 @@ public class FrameEncoder extends MessageToByteEncoder<Frame> {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Frame msg, ByteBuf out) {
-        ByteBuf encoded = FrameCodec.encode(msg);
-        out.writeBytes(encoded);
-        encoded.release();
+        // pooled ByteBuf(out)에 직접 쓰기 — 별도 할당/해제 없음
+        FrameCodec.encodeTo(msg, out);
     }
 }

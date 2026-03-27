@@ -35,8 +35,10 @@ public class GatewayClient {
         return webClient.post()
                 .uri("/v1/authorize")
                 .bodyValue(request)
-                .retrieve()
-                .bodyToMono(AuthorizeResponse.class)
+                .exchangeToMono(response -> {
+                    // 503 등 비정상 응답도 body를 파싱하여 BUSY/TIMEOUT/ERROR 상태를 정확히 반영
+                    return response.bodyToMono(AuthorizeResponse.class);
+                })
                 .timeout(Duration.ofSeconds(5))
                 .onErrorResume(e -> Mono.just(
                         new AuthorizeResponse(null,
