@@ -1,12 +1,22 @@
 server:
   port: 8080
+  tomcat:
+    threads:
+      max: 2000
+    accept-count: 2000
+    max-connections: 5000
+
+spring:
+  threads:
+    virtual:
+      enabled: true
 
 gateway:
   upstream:
     host: localhost
     port: 9090
     max-sessions: 2
-    max-inflight-per-session: 2000
+    max-inflight-per-session: 200
     max-queue-depth: 20000
     request-timeout-ms: 2000
     queue-wait-max-ms: 300

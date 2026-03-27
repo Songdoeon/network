@@ -1,5 +1,18 @@
 {
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "name": "Scenario Events",
+        "type": "dashboard",
+        "filter": { "ids": [], "tags": ["scenario"] }
+      }
+    ]
+  },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -7,7 +20,7 @@
   "links": [],
   "panels": [
     {
-      "title": "Transaction Latency (p50/p95/p99)",
+      "title": "Transaction Latency (p50 / p95 / p99)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "targets": [
@@ -27,20 +40,53 @@
       "fieldConfig": {
         "defaults": {
           "unit": "s",
-          "custom": { "drawStyle": "line", "fillOpacity": 10 }
-        }
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 2.0 }
+            ]
+          },
+          "custom.thresholdsStyle": { "mode": "line" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi" }
       }
     },
     {
-      "title": "Throughput (req/s)",
+      "title": "Protection Events (Busy / Timeout / Error)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
-          "expr": "rate(tx_latency_seconds_count[1m])",
-          "legendFormat": "requests/sec"
+          "expr": "rate(tx_busy_reject_count_total[1m])",
+          "legendFormat": "busy/s"
+        },
+        {
+          "expr": "rate(tx_timeout_count_total[1m])",
+          "legendFormat": "timeout/s"
+        },
+        {
+          "expr": "rate(tx_error_count_total[1m])",
+          "legendFormat": "error/s"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2
+          }
+        }
+      }
     },
     {
       "title": "Inflight per Session",
@@ -51,7 +97,24 @@
           "expr": "session_inflight",
           "legendFormat": "{{sessionId}}"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 2000 }
+            ]
+          },
+          "custom.thresholdsStyle": { "mode": "line" }
+        }
+      }
     },
     {
       "title": "Queue Depth",
@@ -62,26 +125,36 @@
           "expr": "queue_depth",
           "legendFormat": "queue depth"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2
+          }
+        }
+      }
     },
     {
-      "title": "Error / Timeout / Busy Rate",
+      "title": "Throughput (req/s)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
       "targets": [
         {
-          "expr": "rate(tx_timeout_count_total[1m])",
-          "legendFormat": "timeout/s"
-        },
-        {
-          "expr": "rate(tx_error_count_total[1m])",
-          "legendFormat": "error/s"
-        },
-        {
-          "expr": "rate(tx_busy_reject_count_total[1m])",
-          "legendFormat": "busy/s"
+          "expr": "rate(tx_latency_seconds_count[1m])",
+          "legendFormat": "requests/sec"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2
+          }
+        }
+      }
     },
     {
       "title": "Late Responses & Reconnects",
@@ -96,14 +169,23 @@
           "expr": "rate(session_reconnect_count_total[1m])",
           "legendFormat": "reconnects/s"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2
+          }
+        }
+      }
     }
   ],
   "refresh": "5s",
   "schemaVersion": 39,
   "tags": ["gateway"],
   "templating": { "list": [] },
-  "time": { "from": "now-15m", "to": "now" },
+  "time": { "from": "now-5m", "to": "now" },
   "title": "Multiplexing Gateway Dashboard",
   "uid": "gateway-dashboard"
 }

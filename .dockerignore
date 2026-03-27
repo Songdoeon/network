@@ -1,0 +1,9 @@
+.git
+.gradle
+**/build
+**/out
+*.md
+gradle.properties
+.idea
+*.iml
+observability
