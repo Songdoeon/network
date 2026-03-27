@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplexing Gateway — Live Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Header -->
+<header>
+    <h1>Multiplexing Gateway</h1>
+    <p class="subtitle">금융 전문통신의 소수 TCP 세션 제약 아래, 백프레셔와 Admission Control로 시스템을 보호하는 TCP 멀티플렉싱 게이트웨이</p>
+</header>
+
+<!-- Architecture Diagram -->
+<section class="diagram-section">
+    <svg viewBox="0 0 900 220" class="arch-diagram">
+        <!-- Clients Box -->
+        <rect x="30" y="60" width="150" height="100" rx="12" class="box box-client"/>
+        <text x="105" y="95" class="box-title">HTTP Clients</text>
+        <text x="105" y="120" class="box-sub">(Load Generator)</text>
+        <text x="105" y="145" class="box-sub">Port 8082</text>
+
+        <!-- Gateway Box -->
+        <rect x="320" y="30" width="260" height="160" rx="12" class="box box-gateway"/>
+        <text x="450" y="60" class="box-title">Multiplexing Gateway</text>
+        <text x="450" y="90" class="box-label">Session-0: <tspan id="session0-count" class="metric-value">0</tspan></text>
+        <text x="450" y="112" class="box-label">Session-1: <tspan id="session1-count" class="metric-value">0</tspan></text>
+        <text x="450" y="140" class="box-label">Queue: <tspan id="queue-depth" class="metric-value">0</tspan></text>
+        <text x="450" y="165" class="box-label">Timeout: 2000ms</text>
+        <text x="450" y="185" class="box-sub">Port 8080</text>
+
+        <!-- Card Network Box -->
+        <rect x="720" y="60" width="150" height="100" rx="12" class="box box-cardsim"/>
+        <text x="795" y="95" class="box-title">Card Network</text>
+        <text x="795" y="120" class="box-sub">(Simulator)</text>
+        <text x="795" y="145" class="box-sub">TCP 9090</text>
+
+        <!-- Arrows -->
+        <line x1="180" y1="100" x2="320" y2="100" class="arrow"/>
+        <line x1="580" y1="100" x2="720" y2="100" class="arrow"/>
+        <line x1="720" y1="130" x2="580" y2="130" class="arrow arrow-back"/>
+        <line x1="320" y1="130" x2="180" y2="130" class="arrow arrow-back"/>
+
+        <!-- Arrow labels -->
+        <text x="250" y="92" class="arrow-label">HTTP</text>
+        <text x="650" y="92" class="arrow-label">TCP</text>
+
+        <!-- Dynamic dots (driven by real metrics in app.js) -->
+        <g id="dot-layer"></g>
+    </svg>
+</section>
+
+<!-- Scenario Cards -->
+<section class="scenarios-section">
+    <h2>장애 시나리오</h2>
+    <div class="scenario-grid">
+        <div class="scenario-card" id="card-burst">
+            <div class="scenario-icon">⚡</div>
+            <h3>트래픽 폭주</h3>
+            <p class="scenario-what">동작: 평소 대비 20배(2,000 req/s) 트래픽을 10초간 한꺼번에 쏟아붓습니다.</p>
+            <p class="scenario-why">배경: 타임세일이나 이벤트로 트래픽이 급증하면, 백프레셔 없이는 모든 요청이 큐에 쌓이고 레이턴시가 폭발합니다.</p>
+            <p class="scenario-watch">관찰 포인트: p99 레이턴시가 2초 이내로 유지됩니다. BUSY(503)가 초과 트래픽을 거절하며 시스템을 보호합니다.</p>
+            <button onclick="runScenario('BURST')" class="btn-run">▶ 실행</button>
+        </div>
+        <div class="scenario-card" id="card-slowdown">
+            <div class="scenario-icon">🐌</div>
+            <h3>외부기관 슬로우다운</h3>
+            <p class="scenario-what">동작: 카드사 응답 시간이 30ms → 100ms → 200ms → 300ms로 점진적으로 느려진 후 복구됩니다.</p>
+            <p class="scenario-why">배경: 외부기관이 느려지면 inflight이 쌓이고, 메모리 고갈 → 전체 장애로 이어지는 연쇄 장애(cascade failure)의 원인입니다.</p>
+            <p class="scenario-watch">관찰 포인트: Inflight이 한계까지 차오르면 Admission Control이 BUSY를 발동시켜 연쇄 장애를 차단합니다. 외부기관 복구 후 완전히 회복됩니다.</p>
+            <button onclick="runScenario('SLOWDOWN')" class="btn-run">▶ 실행</button>
+        </div>
+        <div class="scenario-card" id="card-session_drop">
+            <div class="scenario-icon">🔌</div>
+            <h3>세션 끊김</h3>
+            <p class="scenario-what">동작: 카드사와의 TCP 연결이 10초마다 강제로 끊어지는 상황을 15초간 만듭니다.</p>
+            <p class="scenario-why">배경: 네트워크 장애는 언제든 발생합니다. 끊어진 세션의 대기 요청은 타임아웃까지 기다리지 않고 즉시 실패 처리(fail-fast)해야 합니다.</p>
+            <p class="scenario-watch">관찰 포인트: 대기 요청이 즉시 에러 처리되고, Exponential Backoff로 재연결 후 트래픽이 정상 복구됩니다.</p>
+            <button onclick="runScenario('SESSION_DROP')" class="btn-run">▶ 실행</button>
+        </div>
+        <div class="scenario-card" id="card-out_of_order">
+            <div class="scenario-icon">🔀</div>
+            <h3>응답 순서 뒤바뀜</h3>
+            <p class="scenario-what">동작: 카드사 응답의 30%가 50~250ms 추가 지연되어 보낸 순서와 다르게 도착합니다.</p>
+            <p class="scenario-why">배경: TCP 멀티플렉싱에서 여러 요청이 하나의 연결을 공유합니다. Correlation-ID 매칭 없이는 응답이 뒤섞여 잘못된 결과가 전달됩니다.</p>
+            <p class="scenario-watch">관찰 포인트: 순서가 뒤바뀌어도 8바이트 correlationId로 정확히 매칭됩니다. 오류 0건.</p>
+            <button onclick="runScenario('OUT_OF_ORDER')" class="btn-run">▶ 실행</button>
+        </div>
+    </div>
+</section>
+
+<!-- Status Bar -->
+<section class="status-section">
+    <div id="status-bar" class="status-bar status-idle">
+        <span id="status-icon">●</span>
+        <span id="status-text">Idle — Select a scenario to begin</span>
+    </div>
+</section>
+
+<!-- Live Metrics -->
+<section class="metrics-section">
+    <h2>실시간 메트릭</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-label">Inflight</div>
+            <div class="metric-value-large" id="live-inflight">0</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Queue Depth</div>
+            <div class="metric-value-large" id="live-queue">0</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">BUSY Rejects</div>
+            <div class="metric-value-large" id="live-busy">0</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Timeouts</div>
+            <div class="metric-value-large" id="live-timeout">0</div>
+        </div>
+    </div>
+    <div class="chart-container">
+        <canvas id="latency-chart" width="800" height="200"></canvas>
+    </div>
+</section>
+
+<!-- Results (hidden until scenario completes) -->
+<section class="results-section" id="results-section" style="display:none;">
+    <h2>실행 결과</h2>
+    <div class="results-card">
+        <div class="results-header">
+            <span id="result-scenario" class="result-scenario">BURST</span>
+            <span id="result-total" class="result-total">Total: 0 requests</span>
+        </div>
+        <div class="results-latency">
+            <div class="latency-item"><span class="latency-label">p50</span><span id="result-p50" class="latency-val">0ms</span></div>
+            <div class="latency-item"><span class="latency-label">p95</span><span id="result-p95" class="latency-val">0ms</span></div>
+            <div class="latency-item"><span class="latency-label">p99</span><span id="result-p99" class="latency-val">0ms</span></div>
+            <div class="latency-item"><span class="latency-label">max</span><span id="result-max" class="latency-val">0ms</span></div>
+        </div>
+        <div class="results-bar" id="results-bar"></div>
+    </div>
+</section>
+
+<footer>
+    <p>Multiplexing Gateway — Portfolio Project | <a href="http://localhost:3000" target="_blank">Grafana Dashboard</a></p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
